@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 export default function ClientDashboard() {
@@ -8,34 +8,35 @@ export default function ClientDashboard() {
   const [servicios, setServicios] = useState([]);
   const [citas, setCitas] = useState([]);
   const [puntos, setPuntos] = useState(0);
-  const [referidos, setReferidos] = useState(0);
+  const [referidos, setReferidos] = useState([]);
+  const [fotos, setFotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const cargarDatos = async () => {
-      if (db) {
-        const cliente = db.clients?.find(c => c.name === user?.name);
-        setServicios(db.services || []);
-        if (cliente) {
-          setCitas(db.appointments?.filter(c => c.clientId === cliente.id) || []);
-          setPuntos(cliente.points || 0);
-          setReferidos(db.clients?.filter(c => c.refBy === cliente.id)?.length || 0);
-        }
-        setLoading(false);
+    if (db) {
+      const cliente = db.clients?.find(c => c.name === user?.name);
+      setServicios(db.services || []);
+      setFotos(db.photos || []);
+      if (cliente) {
+        setCitas(db.appointments?.filter(c => c.clientId === cliente.id) || []);
+        setPuntos(cliente.points || 0);
+        setReferidos(db.clients?.filter(c => c.refBy === cliente.id) || []);
       }
-    };
-    cargarDatos();
+      setLoading(false);
+    }
   }, [db, user]);
 
   const citasProximas = citas.filter(c => new Date(c.date) > new Date()).sort((a, b) => new Date(a.date) - new Date(b.date));
+  const fotosRecientes = fotos.slice(0, 6);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
 
   return (
     <div style={{ background: 'linear-gradient(135deg, #F9F3E6 0%, #fce7f3 100%)', minHeight: '100vh', padding: '20px' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        {/* HEADER */}
+        
+        {/* HEADER CON SALUDO */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <div style={{ width: '60px', height: '60px', borderRadius: '20px', overflow: 'hidden', background: 'white', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}>
@@ -100,6 +101,7 @@ export default function ClientDashboard() {
               const servicio = db.services?.find(s => s.id === cita.serviceId);
               const fecha = new Date(cita.date);
               const diffDias = Math.ceil((fecha - new Date()) / (1000 * 60 * 60 * 24));
+              let cuenta = diffDias === 0 ? '🔥 HOY!' : diffDias === 1 ? '⏰ Mañana' : `${diffDias} días`;
               return (
                 <div key={cita.id} className="bg-white rounded-xl p-3 mb-2 shadow-sm border border-amber-100">
                   <div className="flex justify-between items-center">
@@ -108,8 +110,8 @@ export default function ClientDashboard() {
                       <p className="text-xs text-gray-400">{fecha.toLocaleDateString()} - {fecha.toLocaleTimeString()}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-bold text-green-500">{diffDias === 0 ? '🔥 HOY!' : `${diffDias} días`}</div>
-                      <button onClick={() => navigate(`/cancelar-cita/${cita.id}`)} className="text-xs text-red-400">Cancelar</button>
+                      <div className="text-sm font-bold text-green-500">{cuenta}</div>
+                      <button onClick={() => window.abrirModalCancelarCita?.(cita.id)} className="text-xs text-red-400">Cancelar</button>
                     </div>
                   </div>
                 </div>
@@ -122,10 +124,11 @@ export default function ClientDashboard() {
         <div style={{ background: 'linear-gradient(135deg, #2c241a, #1f1a14)', borderRadius: '28px', padding: '20px', marginBottom: '25px', color: 'white' }}>
           <div className="flex justify-between items-center mb-2">
             <div><p className="text-xs text-gray-400">Tus puntos</p><p className="text-3xl font-bold text-amber-400">{puntos}</p></div>
-            <div className="text-right"><span className="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold">Bronce</span></div>
+            <div className="text-right"><span className="bg-amber-500 text-white px-3 py-1 rounded-full text-xs font-bold">{puntos >= 1000 ? 'Oro' : puntos >= 500 ? 'Plata' : 'Bronce'}</span></div>
           </div>
           <div className="w-full bg-gray-700 rounded-full h-2 mb-2"><div className="bg-amber-500 h-2 rounded-full" style={{ width: `${(puntos % 1000) / 10}%` }}></div></div>
-          <button onClick={() => alert('Canje de puntos')} className="mt-3 text-amber-400 text-sm font-semibold">🎁 Canjear puntos →</button>
+          <p className="text-xs text-gray-400">Te faltan {1000 - (puntos % 1000)} puntos para subir de nivel</p>
+          <button onClick={() => window.abrirModalCanjearPuntos?.()} className="mt-3 text-amber-400 text-sm font-semibold">🎁 Canjear puntos →</button>
         </div>
 
         {/* SERVICIOS */}
@@ -134,35 +137,65 @@ export default function ClientDashboard() {
             <h3 className="text-lg font-bold text-gray-800"><i className="fas fa-spa text-amber-500 mr-2"></i>Nuestros Servicios</h3>
             <span className="bg-amber-100 px-3 py-1 rounded-full text-xs text-amber-700">Toca para agendar</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {servicios.slice(0, 4).map(serv => (
-              <div key={serv.id} className="bg-white rounded-xl p-3 text-center shadow-sm border border-amber-100">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-96 overflow-y-auto p-1">
+            {servicios.map(serv => (
+              <div key={serv.id} className="bg-white rounded-xl p-3 text-center shadow-sm border border-amber-100 hover:shadow-md transition">
                 <div className="text-3xl mb-1">💅</div>
                 <p className="font-semibold text-sm text-gray-800">{serv.name}</p>
                 <p className="text-xs font-bold text-amber-600">${serv.price.toLocaleString()}</p>
-                <button className="mt-2 text-xs bg-amber-500 text-white px-3 py-1 rounded-full">Agendar</button>
+                <p className="text-xs text-gray-400">{serv.duration || '30 min'}</p>
+                <button onClick={() => window.abrirModalAgendarCita?.(serv.id)} className="mt-2 text-xs bg-amber-500 text-white px-3 py-1 rounded-full w-full">Agendar</button>
               </div>
             ))}
           </div>
         </div>
 
+        {/* RECOMENDACIONES */}
+        <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-xl p-4 mb-6">
+          <p className="text-xs text-purple-600 mb-2"><i className="fas fa-magic"></i> Para ti</p>
+          <ul className="space-y-1">
+            <li className="text-sm text-gray-700">✨ Tu favorito es Manicura Clásica</li>
+            <li className="text-sm text-gray-700">💡 Te sugerimos probar Capping Acrílico</li>
+          </ul>
+          <button className="mt-3 text-purple-600 text-sm font-semibold">Ver servicios →</button>
+        </div>
+
         {/* REFERIDOS Y FAVORITOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-gradient-to-r from-teal-100 to-teal-50 rounded-xl p-4">
-            <p className="font-bold text-gray-800">🎁 Invita y gana</p>
-            <p className="text-xs text-gray-500">{referidos} amigas registradas | +{referidos * 500} pts</p>
-            <button className="mt-2 bg-teal-500 text-white px-3 py-1 rounded-lg text-xs">Compartir código</button>
+            <div className="flex items-center gap-3 mb-3">
+              <i className="fas fa-gift text-teal-600 text-2xl"></i>
+              <div><p className="font-bold text-gray-800">Invita y gana</p><p className="text-xs text-gray-500">{referidos.length} amigas registradas | +{referidos.length * 500} pts</p></div>
+            </div>
+            <div className="flex gap-2">
+              <input type="text" value={user?.codigoReferido || `FRESH${user?.name?.substring(0,3).toUpperCase()}`} readOnly className="flex-1 bg-white border border-teal-200 rounded-lg px-3 py-2 text-sm font-mono" />
+              <button onClick={() => { navigator.clipboard.writeText(user?.codigoReferido || ''); toast.success('Código copiado'); }} className="bg-teal-500 text-white px-4 py-2 rounded-lg text-sm">Copiar</button>
+            </div>
+            <button className="mt-3 w-full bg-teal-600 text-white py-2 rounded-lg text-sm font-semibold">Compartir por WhatsApp</button>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm">
             <p className="font-bold text-gray-800 mb-2">❤️ Favoritos</p>
-            <p className="text-xs text-gray-400">No tienes productos favoritos</p>
+            <div className="flex overflow-x-auto gap-3">
+              <div className="min-w-[100px] bg-gray-50 rounded-xl p-2 text-center">💅 Producto ejemplo</div>
+            </div>
           </div>
         </div>
 
         {/* GALERÍA PERSONAL */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 shadow-sm mb-6">
           <h3 className="font-bold text-gray-800 mb-3"><i className="fas fa-images text-amber-500 mr-2"></i>Tus Recuerdos</h3>
-          <div className="text-center text-gray-400 py-6">📸 No tienes fotos aún</div>
+          {fotosRecientes.length === 0 ? (
+            <div className="text-center text-gray-400 py-6">📸 No tienes fotos aún</div>
+          ) : (
+            <div className="grid grid-cols-3 gap-2">
+              {fotosRecientes.map(foto => (
+                <div key={foto.id} className="rounded-xl overflow-hidden aspect-square cursor-pointer">
+                  <img src={foto.url} className="w-full h-full object-cover" alt="Trabajo" />
+                </div>
+              ))}
+            </div>
+          )}
+          <button className="text-pink-500 text-sm font-semibold mt-2">+ Subir nueva foto</button>
         </div>
 
         {/* BOTONES FLOTANTES */}

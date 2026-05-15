@@ -12,27 +12,6 @@
   transition: background-color 0.3s, color 0.2s;
 }
 
-body {
-  background: #F2F2F2;
-  min-height: 100vh;
-}
-
-/* ========== VARIABLES ========== */
-:root {
-  --primary: #D9AE79;
-  --primary-dark: #c49a5e;
-  --secondary: #BFA084;
-  --beige-light: #F2F2F2;
-  --text-dark: #8C5E35;
-  --border-soft: #BFA084;
-  --white: #FFFFFF;
-  --pink: #ec4899;
-  --rose: #be185d;
-  --purple: #667eea;
-  --purple-dark: #764ba2;
-}
-
-/* ========== MODO CLARO / OSCURO ========== */
 body.light {
   background: #F2F2F2 !important;
 }
@@ -92,6 +71,7 @@ body.dark .glass-card {
 .tab-btn {
   color: #4b5563 !important;
   background: transparent !important;
+  transition: all 0.2s ease !important;
 }
 
 .tab-btn.active {
@@ -125,7 +105,7 @@ body.dark .glass-card {
   backdrop-filter: blur(20px);
   border-radius: 48px;
   width: 90%;
-  max-width: 500px;
+  max-width: 520px;
   animation: modalPop 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
   overflow: hidden;
@@ -139,6 +119,17 @@ body.dark .glass-card {
 .modal-header-premium {
   padding: 1.75rem 1.75rem 0.5rem 1.75rem;
   text-align: center;
+  position: relative;
+}
+
+.modal-header-premium h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
 }
 
 .btn-close-modal {
@@ -206,6 +197,17 @@ body.dark .glass-card {
   cursor: pointer;
 }
 
+.btn-modal-cancelar {
+  flex: 1;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 0.85rem;
+  border-radius: 40px;
+  color: #4b5563;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ========== CALENDARIO ========== */
 .calendario-grid {
   display: flex;
@@ -249,6 +251,83 @@ body.dark .glass-card {
   margin-bottom: 4px;
   cursor: pointer;
   border-left: 3px solid #ec4899;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.cell-ocupado {
+  background: rgba(239, 68, 68, 0.08) !important;
+  position: relative;
+}
+
+.cell-ocupado::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #ef4444, #ec4899);
+}
+
+/* ========== GALERÍA ========== */
+.galeria-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.galeria-item {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(236, 72, 153, 0.08);
+  cursor: pointer;
+}
+
+.galeria-item-img {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.galeria-item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.galeria-item:hover .galeria-item-img img {
+  transform: scale(1.05);
+}
+
+/* ========== LIGHTBOX ========== */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.lightbox-content img {
+  max-width: 90vw;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 20px;
 }
 
 /* ========== DASHBOARD CLIENTE ========== */
@@ -262,61 +341,37 @@ body.dark .glass-card {
   padding: 0 20px !important;
 }
 
-/* ========== GALERÍA ========== */
-.galeria-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
+#serviciosCliente, #galeriaCliente {
+  display: grid !important;
+  gap: 1rem !important;
+  width: 100% !important;
 }
 
-.galeria-item {
-  background: white;
-  border-radius: 20px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s;
+@media (max-width: 767px) {
+  #serviciosCliente, #galeriaCliente { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  #serviciosCliente, #galeriaCliente { grid-template-columns: repeat(3, 1fr) !important; }
+}
+@media (min-width: 1024px) {
+  #serviciosCliente, #galeriaCliente { grid-template-columns: repeat(4, 1fr) !important; }
 }
 
-.galeria-item img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  object-fit: cover;
-}
-
-/* ========== LIGHTBOX ========== */
-.lightbox-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.95);
-  z-index: 999999;
+/* ========== UTILIDADES ========== */
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
-  align-items: center;
-  justify-content: center;
 }
 
-.lightbox-content {
-  position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
+.animate-pulse-glow {
+  animation: pulseGlow 2s infinite;
 }
 
-.lightbox-content img {
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
-  border-radius: 12px;
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(236, 72, 153, 0.2); }
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-  .servicios-grid {
-    gap: 0.5rem;
-  }
-  .galeria-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.75rem;
-  }
+.logo-transparent {
+  background: transparent !important;
+  mix-blend-mode: multiply;
 }

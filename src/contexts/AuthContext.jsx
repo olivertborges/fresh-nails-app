@@ -35,7 +35,14 @@ export const AuthProvider = ({ children }) => {
         .single();
       
       if (error) throw error;
-      setDb(JSON.parse(data.content));
+      const loaded = JSON.parse(data.content);
+      console.log('📊 Datos cargados:', {
+        servicios: loaded.services?.length,
+        clientes: loaded.clients?.length,
+        citas: loaded.appointments?.length,
+        productos: loaded.products?.length
+      });
+      setDb(loaded);
     } catch (error) {
       console.error('Error cargando datos:', error);
     }
