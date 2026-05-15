@@ -2,6 +2,28 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import emailjs from '@emailjs/browser';
+import { EMAILJS_CONFIG } from '../config/emailjs';
+
+// Dentro de una función async
+const enviarEmail = async () => {
+  const templateParams = {
+    to_email: 'cliente@email.com',
+    to_name: 'Cliente',
+    codigo: '123456'
+  };
+
+  try {
+    const response = await emailjs.send(
+      EMAILJS_CONFIG.SERVICE_ID,
+      EMAILJS_CONFIG.TEMPLATE_ID,
+      templateParams
+    );
+    console.log('Email enviado:', response);
+  } catch (error) {
+    console.error('Error:', error);
+  }
+};
 
 export default function Login() {
   const [username, setUsername] = useState('');
